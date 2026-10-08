@@ -1,0 +1,151 @@
+/* Mobile-first. Sem largura fixa: o cartão ocupa o espaço disponível e cresce até um teto. */
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.pagina {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  background: var(--fundo, #0f1216);
+}
+
+.cartao {
+  width: 100%;
+  max-width: 30rem;
+  padding: 1.25rem;
+  box-sizing: border-box;
+  border-radius: 0.75rem;
+  background: var(--cartao, #171b21);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+  color: var(--texto, #e6e9ee);
+}
+
+.ajuda {
+  margin: 0 0 1rem;
+  color: var(--texto-secundario, #a8b0bb);
+  font-size: 0.9rem;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.9rem;
+}
+
+.campo--grupo {
+  border: 1px solid var(--borda, #2a313a);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.campo__rotulo {
+  font-size: 0.85rem;
+  color: var(--texto-secundario, #a8b0bb);
+}
+
+input[type='text'],
+input[type='email'],
+input[type='tel'] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.7rem 0.6rem;
+  font-size: 1rem;
+  min-height: 2.75rem;
+  border: 1px solid var(--borda, #2a313a);
+  border-radius: 0.4rem;
+  background: var(--entrada, #0f1216);
+  color: var(--texto, #e6e9ee);
+}
+
+.termo {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  margin: 1rem 0;
+  color: var(--texto-secundario, #a8b0bb);
+  font-size: 0.85rem;
+}
+
+.termo input {
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin-top: 0.1rem;
+}
+
+.termo__texto {
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+button {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 1.05rem;
+  min-height: 3rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: var(--acento, #2f6fed);
+  color: #fff;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: var(--desabilitado, #3a424d);
+  cursor: not-allowed;
+}
+
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.aviso {
+  margin: 0.25rem 0;
+  color: var(--texto-secundario, #a8b0bb);
+}
+
+.aviso--erro {
+  color: var(--erro, #ff7a7a);
+}
+
+.aviso--ok {
+  color: var(--ok, #7adf8a);
+}
+
+.codigo {
+  margin: 1rem 0;
+  font-size: 2.6rem;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  text-align: center;
+  color: var(--texto, #e6e9ee);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Telas maiores: mais respiro, sem mudar o fluxo. */
+@media (min-width: 40rem) {
+  .cartao {
+    padding: 1.75rem;
+  }
+
+  .codigo {
+    font-size: 3.2rem;
+  }
+}

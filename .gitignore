@@ -1,0 +1,29 @@
+# Java / Maven
+backend/target/
+
+# Node / Angular
+node_modules/
+frontend/.angular/
+frontend/dist/
+*.tsbuildinfo
+
+# Ambiente
+.env
+
+# Chaves — a PRIVADA da instalação NUNCA entra no repositório.
+*.pk8.pem
+*.pem
+chaves/
+
+# IDE / editor
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: sgt-online-backend
+  datasource:
+    url: ${ONLINE_DB_URL:jdbc:postgresql://localhost:5433/sgt_online}
+    username: ${ONLINE_DB_USER:sgt_online}
+    password: ${ONLINE_DB_PASSWORD:sgt_online}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: ${ONLINE_PORTA:8090}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+online:
+  # Base EXTERNA do Online usada na validação do `aud` do JWT do conector. Tem de ser IGUAL a
+  # SGT_ONLINE_URL do conector (a URL que ele de fato acessa), senão o JWT é recusado.
+  base-url: ${ONLINE_BASE_URL:http://localhost:8090}
+  # Tempo mínimo entre carregar o formulário e enviar (anti-bot, DEC §4/§11).
+  tempo-minimo-preenchimento: ${ONLINE_TEMPO_MINIMO:3s}

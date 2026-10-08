@@ -1,0 +1,61 @@
+# SGT EHS/Visitas Online (25d) — balcão de entrada do MVP do QR. Independente do SGT (R16).
+# Portas no host: backend 8090, frontend 4300, postgres 5433 (não conflitam com o SGT).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${ONLINE_DB_USER:-sgt_online}
+      POSTGRES_PASSWORD: ${ONLINE_DB_PASSWORD:-sgt_online}
+      POSTGRES_DB: ${ONLINE_DB_NAME:-sgt_online}
+    ports:
+      - "5433:5432"
+    volumes:
+      - online-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    ports:
+      - "8090:8090"
+    environment:
+      ONLINE_DB_URL: jdbc:postgresql://db:5432/${ONLINE_DB_NAME:-sgt_online}
+      ONLINE_DB_USER: ${ONLINE_DB_USER:-sgt_online}
+      ONLINE_DB_PASSWORD: ${ONLINE_DB_PASSWORD:-sgt_online}
+      # Base EXTERNA usada na validação do `aud` do JWT do conector. Tem de ser IGUAL a SGT_ONLINE_URL
+      # do conector (a URL que ele de fato acessa). Padrão: host.docker.internal para o conector chegar
+      # de dentro do compose do SGT.
+      ONLINE_BASE_URL: ${ONLINE_BASE_URL:-http://host.docker.internal:8090}
+      ONLINE_TEMPO_MINIMO: ${ONLINE_TEMPO_MINIMO:-3s}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8090/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4300:4300"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4300/').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1));",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 120s
+
+volumes:
+  online-pgdata:

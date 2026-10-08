@@ -1,0 +1,77 @@
+<main class="pagina">
+  @if (estado === 'carregando') {
+    <p class="aviso" aria-live="polite">Carregando…</p>
+  } @else if (estado === 'erro') {
+    <section class="cartao">
+      <h1>Visitas</h1>
+      <p class="aviso aviso--erro" aria-live="polite">{{ erro }}</p>
+    </section>
+  } @else if (estado === 'codigo') {
+    <section class="cartao">
+      <h1>Pré-cadastro realizado</h1>
+      <p class="aviso aviso--ok">Apresente este código na portaria.</p>
+      <div class="codigo" aria-label="Código de confirmação">{{ codigo }}</div>
+      <p class="ajuda">Válido por {{ expiraHoras }} h. Guarde ou anote o código.</p>
+    </section>
+  } @else {
+    <section class="cartao">
+      <h1>Visitas</h1>
+      <p class="ajuda">Preencha seus dados para visitar. A confirmação acontece na portaria.</p>
+
+      <form (ngSubmit)="enviar()" novalidate>
+        <label class="campo">
+          <span class="campo__rotulo">Nome <span aria-hidden="true">*</span></span>
+          <input name="nome" [(ngModel)]="model.nome" required maxlength="200" autocomplete="name" />
+        </label>
+
+        <label class="campo">
+          <span class="campo__rotulo">CPF</span>
+          <input name="cpf" [(ngModel)]="model.cpf" inputmode="numeric" maxlength="14" autocomplete="off" />
+        </label>
+
+        <fieldset class="campo campo--grupo">
+          <legend class="campo__rotulo">Documento (se não tiver CPF)</legend>
+          <label class="campo">
+            <span class="campo__rotulo">Tipo</span>
+            <input name="docTipo" [(ngModel)]="model.docTipo" maxlength="30" placeholder="RG, CNH…" />
+          </label>
+          <label class="campo">
+            <span class="campo__rotulo">Número</span>
+            <input name="docNumero" [(ngModel)]="model.docNumero" maxlength="30" />
+          </label>
+        </fieldset>
+
+        <label class="campo">
+          <span class="campo__rotulo">Empresa</span>
+          <input name="empresa" [(ngModel)]="model.empresa" maxlength="200" autocomplete="organization" />
+        </label>
+
+        <label class="campo">
+          <span class="campo__rotulo">Telefone</span>
+          <input name="telefone" [(ngModel)]="model.telefone" maxlength="30" inputmode="tel" autocomplete="tel" />
+        </label>
+
+        <label class="campo">
+          <span class="campo__rotulo">E-mail</span>
+          <input name="email" type="email" [(ngModel)]="model.email" maxlength="100" autocomplete="email" />
+        </label>
+
+        <!-- honeypot: campo oculto; bot que preencher é descartado no servidor -->
+        <input name="siteWeb" [(ngModel)]="model.siteWeb" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+        <label class="termo">
+          <input type="checkbox" name="aceite" [(ngModel)]="model.aceite" />
+          <span class="termo__texto">{{ termo }}</span>
+        </label>
+
+        @if (erroForm) {
+          <p class="aviso aviso--erro" role="alert">{{ erroForm }}</p>
+        }
+
+        <button type="submit" [disabled]="!model.aceite || enviando">
+          {{ enviando ? 'Enviando…' : 'Gerar código' }}
+        </button>
+      </form>
+    </section>
+  }
+</main>
