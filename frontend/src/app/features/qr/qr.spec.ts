@@ -85,13 +85,14 @@ describe('Qr', () => {
     expect(fixture.debugElement.query(By.css('input[name="docNumero"]'))).toBeTruthy();
   });
 
-  it('honeypot está presente e invisível', async () => {
+  it('honeypot está presente, invisível (fora da tela por CSS) e sem autocomplete', async () => {
     criar(new QrMock());
     await preparar();
     const hp = fixture.debugElement.query(By.css('input.honeypot'));
     expect(hp).toBeTruthy();
     expect(hp.attributes['aria-hidden']).toBe('true');
     expect(hp.attributes['tabindex']).toBe('-1');
+    expect(hp.attributes['autocomplete']).toBe('off');
   });
 
   it('após o envio, exibe o código de 6 dígitos', async () => {
@@ -146,5 +147,37 @@ describe('Qr', () => {
     comp.enviar();
     await fixture.whenStable();
     expect(comp.erroForm).toBe('muitas tentativas; tente mais tarde');
+  });
+
+  it('sem CPF nem documento, o envio é recusado (nenhum código é gerado)', async () => {
+    const m = new QrMock();
+    m.preCadastro = () =>
+      throwError(() => new HttpErrorResponse({ status: 400, error: { mensagem: 'informe o CPF ou um documento' } }));
+    criar(m);
+    const comp = await preparar();
+    comp.model.aceite = true;
+    comp.model.nome = 'Fulano';
+    // cpf e documento vazios: a validação acontece no servidor
+    comp.enviar();
+    await fixture.whenStable();
+    expect(comp.erroForm).toBe('informe o CPF ou um documento');
+    expect(comp.estado).toBe('formulario');
+    expect(comp.codigo).toBe('');
+  });
+
+  it('CPF com dígito verificador inválido é recusado', async () => {
+    const m = new QrMock();
+    m.preCadastro = () =>
+      throwError(() => new HttpErrorResponse({ status: 400, error: { mensagem: 'cpf inválido' } }));
+    criar(m);
+    const comp = await preparar();
+    comp.model.aceite = true;
+    comp.model.nome = 'Fulano';
+    comp.model.cpf = '529.982.247-26';
+    comp.enviar();
+    await fixture.whenStable();
+    expect(comp.erroForm).toBe('cpf inválido');
+    expect(comp.estado).toBe('formulario');
+    expect(comp.codigo).toBe('');
   });
 });
