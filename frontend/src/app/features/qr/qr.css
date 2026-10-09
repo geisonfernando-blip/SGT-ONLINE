@@ -108,7 +108,16 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.honeypot {
+/* Foco de teclado visível (acessibilidade): contorno claro nos elementos interativos. */
+input:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--acento, #2f6fed);
+  outline-offset: 2px;
+}
+
+/* input.honeypot (não só .honeypot): empata a especificidade com input[type='text'], para o
+   1×1 px valer (senão a largura 100%/min-height do campo de texto sobrescreve). */
+input.honeypot {
   position: absolute;
   left: -9999px;
   width: 1px;
