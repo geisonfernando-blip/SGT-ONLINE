@@ -24,15 +24,15 @@
 \set ON_ERROR_STOP 1
 \set chave_publica `cat :'arquivo'`
 
-BEGIN;
-
 -- sanidade: não aceitar nada que não seja uma chave PÚBLICA (falha fechada no JWT depois).
-DO $$
-BEGIN
-    IF :'chave_publica' !~ 'BEGIN PUBLIC KEY' THEN
-        RAISE EXCEPTION 'arquivo não contém uma chave pública (BEGIN PUBLIC KEY)';
-    END IF;
-END $$;
+-- (feita fora de um bloco $$: o psql NÃO interpola :variaveis dentro de dollar-quoting)
+SELECT :'chave_publica' !~ 'BEGIN PUBLIC KEY' AS chave_invalida \gset
+\if :chave_invalida
+    \echo 'arquivo não contém uma chave pública (BEGIN PUBLIC KEY)'
+    \quit 1
+\endif
+
+BEGIN;
 
 INSERT INTO instalacao (id, tenant, nome, chave_publica)
 VALUES (:'instalacao', :tenant::bigint, :'nome', :'chave_publica')
