@@ -39,9 +39,10 @@ public class ConectorJwtFilter extends OncePerRequestFilter {
             return;
         }
         String token = auth.substring(7).trim();
+        Instalacao inst;
         try {
             String iss = JwtVerificador.iss(token);
-            Instalacao inst = repo.instalacaoAtiva(iss)
+            inst = repo.instalacaoAtiva(iss)
                     .orElseThrow(() -> new Exception("instalação desconhecida ou inativa"));
             JwtVerificador.Reivindicacoes r = JwtVerificador.verificar(token, inst.chavePublica(), props.baseUrl());
             repo.limparJtiExpirados();
@@ -49,12 +50,13 @@ public class ConectorJwtFilter extends OncePerRequestFilter {
                 erro(res, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALIDO");
                 return;
             }
-            req.setAttribute(ATTR_INSTALACAO, inst);
-            chain.doFilter(req, res);
         } catch (Exception e) {
             // nunca logar o token nem o motivo detalhado; só o código do contrato
             erro(res, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALIDO");
+            return;
         }
+        req.setAttribute(ATTR_INSTALACAO, inst);
+        chain.doFilter(req, res);
     }
 
     private static void erro(HttpServletResponse res, int status, String codigo) throws IOException {

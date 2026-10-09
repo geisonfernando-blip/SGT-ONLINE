@@ -76,3 +76,23 @@ tools/registrar-instalacao.sql · docker-compose.yml · .env.example · .gitigno
 - `SHA256withECDSAinP1363Format` (JWT) precisa de Java 21 — só em container.
 - O `db` do Online e o `db` do SGT são bancos distintos; não cruzar.
 - `host.docker.internal` só existe em Docker Desktop (Windows/Mac); em Linux, ajustar.
+
+## Decisões firmadas nesta etapa (2026-10-09) — testes e fechamento do MVP
+
+- **Purga acontece no ack** (`POST /entrada/ack` → `purgarEntregues`) **e na expiração**
+  (`expirarVencidos`), anulando TODOS os dados pessoais do pré-cadastro (nome, cpf, documento
+  tipo/número, empresa, telefone, email, ip, user_agent). Decisão **conservadora** para o MVP: os
+  dados somem assim que o conector confirma, sem prazo de retenção. O prazo de retenção no Online
+  segue em aberto — é a **PEND-093 do SGT** (não redecidir aqui; o contrato e a DEC não mudam).
+- **V002** corrige o esquema da V001 (`nome`/`ip`/`user_agent` eram `NOT NULL` e a purga os anulava):
+  dados pessoais anuláveis + `CHECK pre_cadastro_qr_dados_chk` (obrigatórios só em `PENDENTE`;
+  todos `NULL` em `ENTREGUE`/`EXPIRADO`). A linha persiste com `site_id`/`codigo_curto`/`expira_em`.
+- **`ConectorJwtFilter`** passou a proteger SÓ a verificação do JWT; `chain.doFilter` ficou fora do
+  `try`, então exceção depois da autenticação propaga (5xx) em vez de virar 401 `TOKEN_INVALIDO`.
+- **Validação da CONFIG_SITE** (contrato §8): `preCadastroExpiraHoras` 1..24, `codigoCurtoDigitos` = 6,
+  limites `>= 1` quando informados, e termo null OU completo com `sha256Texto` conferindo com `texto`.
+  Entrada inválida → `400 MENSAGEM_INVALIDA` (nunca 5xx do banco).
+- Testes de integração escritos (**41 verdes**): JWT, `/entrada` (long poll + cursor + ack + reenvio),
+  `POST /saida` CONFIG_SITE (idempotência/versão/validação), formulário público (código/CPF/honeypot/
+  limites/termo null), purga no ack e na expiração, CHECK da V002, e 5xx pós-autenticação com corpo
+  mínimo (sem stack trace/SQL/dado pessoal).

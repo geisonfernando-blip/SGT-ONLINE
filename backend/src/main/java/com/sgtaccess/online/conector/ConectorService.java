@@ -4,6 +4,9 @@ import com.sgtaccess.online.ErroApi;
 import com.sgtaccess.online.OnlineRepository;
 import com.sgtaccess.online.OnlineRepository.Instalacao;
 import com.sgtaccess.online.OnlineRepository.PreCadastro;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -120,16 +123,69 @@ public class ConectorService {
 
         JsonNode dados = m.path("dados");
         String identificadorQr = texto(dados, "identificadorQr");
+        if (identificadorQr == null) {
+            throw new ErroApi(HttpStatus.BAD_REQUEST, "MENSAGEM_INVALIDA", "identificadorQr obrigatório");
+        }
         boolean ativo = dados.path("ativo").asBoolean();
         int expiraHoras = dados.path("preCadastroExpiraHoras").asInt(4);
+        if (expiraHoras < 1 || expiraHoras > 24) {
+            throw new ErroApi(HttpStatus.BAD_REQUEST, "MENSAGEM_INVALIDA",
+                    "preCadastroExpiraHoras deve estar entre 1 e 24");
+        }
+        int digitos = dados.path("codigoCurtoDigitos").asInt(6);
+        if (digitos != 6) {
+            throw new ErroApi(HttpStatus.BAD_REQUEST, "MENSAGEM_INVALIDA", "codigoCurtoDigitos deve ser 6");
+        }
         JsonNode limites = dados.path("limites");
         Integer limiteIp = inteiro(limites, "porIpHora");
         Integer limiteAparelho = inteiro(limites, "porAparelhoHora");
         Integer limiteSite = inteiro(limites, "porSiteHora");
-        String termoJson = dados.hasNonNull("termo") ? dados.get("termo").toString() : null;
+        if (!limiteValido(limiteIp) || !limiteValido(limiteAparelho) || !limiteValido(limiteSite)) {
+            throw new ErroApi(HttpStatus.BAD_REQUEST, "MENSAGEM_INVALIDA",
+                    "limites, quando informados, devem ser >= 1");
+        }
+        String termoJson = dados.hasNonNull("termo") ? validarTermo(dados.get("termo")) : null;
 
         repo.aplicarConfigSite(id, siteId, chave, versao, identificadorQr, ativo, expiraHoras, limiteIp,
                 limiteAparelho, limiteSite, termoJson);
+    }
+
+    /** Valida os campos da CONFIG_SITE que, inválidos, virariam erro do banco ou dado inconsistente. */
+    private static boolean limiteValido(Integer v) {
+        return v == null || v >= 1;
+    }
+
+    /** Termo null é válido; não-nulo exige os quatro campos e o sha256 conferindo com o texto. */
+    private static String validarTermo(JsonNode termo) {
+        String termoId = texto(termo, "termoId");
+        long termoVersao = termo.path("termoVersao").asLong(-1);
+        String sha = texto(termo, "sha256Texto");
+        if (termoId == null || termoVersao < 1 || sha == null || !termo.hasNonNull("texto")
+                || termo.get("texto").asText().trim().isEmpty()) {
+            throw new ErroApi(HttpStatus.BAD_REQUEST, "MENSAGEM_INVALIDA",
+                    "termo incompleto (termoId, termoVersao, sha256Texto, texto)");
+        }
+        if (!sha.matches("[0-9a-f]{64}")) {
+            throw new ErroApi(HttpStatus.BAD_REQUEST, "MENSAGEM_INVALIDA", "sha256Texto do termo inválido");
+        }
+        if (!sha.equals(sha256(termo.get("texto").asText()))) {
+            throw new ErroApi(HttpStatus.BAD_REQUEST, "MENSAGEM_INVALIDA",
+                    "sha256Texto não confere com o texto do termo");
+        }
+        return termo.toString();
+    }
+
+    private static String sha256(String texto) {
+        try {
+            byte[] h = MessageDigest.getInstance("SHA-256").digest(texto.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(h.length * 2);
+            for (byte b : h) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /** Envelope (contrato §4) de um PRE_CADASTRO_QR, com `tenant`/`site` como ids do SGT em texto (PEND-099). */
