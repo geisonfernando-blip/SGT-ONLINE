@@ -32,7 +32,7 @@ services:
       ONLINE_TEMPO_MINIMO: ${ONLINE_TEMPO_MINIMO:-3s}
       # Origens liberadas no CORS da página pública (lista separada por vírgula, SEM curinga).
       # Obrigatória: sem ela o backend não sobe (fora do perfil dev).
-      ONLINE_CORS_ORIGINS: ${ONLINE_CORS_ORIGINS:?informe a origem da pagina publica, ex.: http://192.168.0.10:4300}
+      ONLINE_CORS_ORIGINS: "${ONLINE_CORS_ORIGINS:?informe a origem da pagina publica, ex http://192.168.0.10:4300}"
     depends_on:
       db:
         condition: service_healthy
