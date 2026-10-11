@@ -38,6 +38,17 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "ensaio": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/app/environment.ts",
+                  "with": "src/app/environment.ensaio.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -46,7 +57,8 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": { "buildTarget": "online:build:production" },
-            "development": { "buildTarget": "online:build:development" }
+            "development": { "buildTarget": "online:build:development" },
+            "ensaio": { "buildTarget": "online:build:ensaio" }
           },
           "defaultConfiguration": "development"
         },
