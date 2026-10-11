@@ -33,6 +33,8 @@ public class PreCadastroService {
     private static final Pattern DOC_TIPO = Pattern.compile("[\\p{L}0-9 _-]{2,30}");
     private static final Pattern DOC_NUMERO = Pattern.compile("[\\p{L}0-9./ -]{1,30}");
     private static final Pattern CONTROLE = Pattern.compile("\\p{Cntrl}");
+    /** Identificador anônimo do aparelho: só letras, dígitos, `_` e `-`, até 64 (limite por aparelho). */
+    private static final Pattern APARELHO = Pattern.compile("[A-Za-z0-9_-]{1,64}");
 
     private final OnlineRepository repo;
     private final RateLimiter rateLimiter;
@@ -86,10 +88,7 @@ public class PreCadastroService {
         }
 
         String ip = ipDo(req);
-        String aparelho = req.getHeader("X-Aparelho");
-        if (aparelho == null || aparelho.isBlank()) {
-            aparelho = ip;
-        }
+        String aparelho = aparelho(req, ip);
         if (!rateLimiter.permitir("ip:" + ip, c.limiteIp())) {
             throw limite();
         }
@@ -182,7 +181,25 @@ public class PreCadastroService {
         return sb.toString();
     }
 
-    private static String ipDo(HttpServletRequest req) {
+    /**
+     * Chave do limite por aparelho. O cabeçalho vem do cliente e é controlado por ele: aceitar só um
+     * formato curto e estável evita inflar o mapa de limites, mas NÃO torna o limite por aparelho
+     * confiável — um cliente pode mandar outro valor a cada envio. Os limites que valem mesmo são o por
+     * IP e o por site/hora.
+     */
+    private static String aparelho(HttpServletRequest req, String ip) {
+        String v = req.getHeader("X-Aparelho");
+        return v != null && APARELHO.matcher(v.trim()).matches() ? v.trim() : ip;
+    }
+
+    /**
+ * IP do visitante. Hoje o frontend chama o backend DIRETO (sem proxy), então {@code remoteAddr} já é o
+ * endereço real. O {@code X-Forwarded-For} só deve ser considerado quando houver proxy reverso
+ * confiável na frente — enquanto não houver, aceitá-lo de qualquer origem deixa a chave do limite por
+ * IP forjável por qualquer cliente. PEND: aceitar XFF só se {@code remoteAddr} estiver em
+ * {@code ONLINE_PROXIES_CONFIAVEIS}.
+ */
+private static String ipDo(HttpServletRequest req) {
         String ff = req.getHeader("X-Forwarded-For");
         if (ff != null && !ff.isBlank()) {
             return ff.split(",")[0].trim();

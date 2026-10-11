@@ -137,6 +137,36 @@ class PreCadastroIntegrationTest extends OnlineTesteBase {
         }
     }
 
+    @Test
+    void limitePorAparelhoHoraAplicadoQuandoConfigurado() throws Exception {
+        configurarSite(SITE, IDENTIFICADOR_QR, true, true, null);
+        limitePorAparelho(2);
+
+        assertThat(preCadastrar(IDENTIFICADOR_QR, null, null, "navegador-abc").getResponse().getStatus())
+                .isEqualTo(200);
+        assertThat(preCadastrar(IDENTIFICADOR_QR, null, null, "navegador-abc").getResponse().getStatus())
+                .isEqualTo(200);
+        // mesmo IP, aparelho diferente: o limite por aparelho não estoura
+        assertThat(preCadastrar(IDENTIFICADOR_QR, null, null, "navegador-xyz").getResponse().getStatus())
+                .isEqualTo(200);
+        assertThat(preCadastrar(IDENTIFICADOR_QR, null, null, "navegador-abc").getResponse().getStatus())
+                .isEqualTo(429);
+    }
+
+    @Test
+    void aparelhoInvalidoCaiParaOIpSemRecusarOEnvio() throws Exception {
+        configurarSite(SITE, IDENTIFICADOR_QR, true, true, null);
+        limitePorAparelho(2);
+
+        // cabeçalho fora do formato aceito ([A-Za-z0-9_-]{1,64}): não recusa, cai para a chave do IP
+        assertThat(preCadastrar(IDENTIFICADOR_QR, null, "1.2.3.4", "aparelho com espaço!")
+                .getResponse().getStatus()).isEqualTo(200);
+        assertThat(preCadastrar(IDENTIFICADOR_QR, null, "1.2.3.4", "x".repeat(65))
+                .getResponse().getStatus()).isEqualTo(200);
+        // ... e o limite passa a valer por IP, como para qualquer visitante sem cabeçalho
+        assertThat(preCadastrar(IDENTIFICADOR_QR, null, "1.2.3.4", null).getResponse().getStatus()).isEqualTo(429);
+    }
+
     // ------------------------------------------------------------------ indisponibilidade
 
     @Test
@@ -185,6 +215,11 @@ class PreCadastroIntegrationTest extends OnlineTesteBase {
     }
 
     // ------------------------------------------------------------------ helpers
+
+    /** Limite por aparelho/hora do site de ensaio (o helper de fixture só cobre o limite por IP). */
+    private void limitePorAparelho(int limite) {
+        jdbc.update("UPDATE config_site SET limite_por_aparelho_hora = ? WHERE site_id = ?", limite, SITE);
+    }
 
     private String formToken(String identificadorQr) throws Exception {
         MvcResult r = mvc.perform(get("/api/publico/config-qr/{id}", identificadorQr))
