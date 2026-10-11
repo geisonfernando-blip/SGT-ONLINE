@@ -55,8 +55,29 @@ class ErroCabecalhosTest extends OnlineTesteBase {
 
     @Test
     void erro400DeJsonMalformadoTemCabecalhosECorpoDoContrato() throws Exception {
+        // corpo malformado com um trecho que o Jackson costuma ecoar na mensagem de erro
+        String corpoRuim = "{\"identificadorQr\": \"ensaioQR0001\", \"cpf\":\"52998224725\"";
         conferir(mvc.perform(post("/api/publico/pre-cadastro").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"identificadorQr\": ")).andReturn(), 400, "MENSAGEM_INVALIDA");
+                .content(corpoRuim)).andReturn(), 400, "MENSAGEM_INVALIDA");
+    }
+
+    /** A mensagem do Jackson traz trecho do corpo recebido; ela não pode ecoar na resposta. */
+    @Test
+    void jsonMalformadoNaoEcoaTrechoDoCorpoNemDetalheInterno() throws Exception {
+        String corpoRuim = "{\"identificadorQr\": \"ensaioQR0001\", \"cpf\":\"52998224725\"";
+        MvcResult r = mvc.perform(post("/api/publico/pre-cadastro").contentType(MediaType.APPLICATION_JSON)
+                .content(corpoRuim)).andReturn();
+
+        String resposta = r.getResponse().getContentAsString();
+        assertThat(resposta)
+                .doesNotContain("52998224725", "ensaioQR0001", "identificadorQr", "cpf", "Unexpected",
+                        "Unexpected end", "JsonEOFException", "readToken", "token");
+        // corpo exatamente no formato do contrato, com mensagem genérica
+        Map<String, Object> corpo = om.readValue(resposta, Map.class);
+        assertThat(corpo).containsOnlyKeys("codigo", "mensagem", "correlacao");
+        assertThat(corpo.get("codigo")).isEqualTo("MENSAGEM_INVALIDA");
+        assertThat(corpo.get("mensagem")).isEqualTo("requisição inválida");
+        assertThat(corpo.get("correlacao")).isNull();
     }
 
     private void conferir(MvcResult r, int statusEsperado, String codigoEsperado)
