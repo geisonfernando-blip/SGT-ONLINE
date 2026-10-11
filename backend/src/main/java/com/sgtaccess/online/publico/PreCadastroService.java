@@ -89,10 +89,13 @@ public class PreCadastroService {
 
         String ip = ipDo(req);
         String aparelho = aparelho(req, ip);
+        // mapa de limites saturado: o limite por aparelho é o mais fraco (o cliente o controla) e criar
+        // mais chaves só agravaria. Ficam valendo o por IP e o por site/hora.
+        boolean saturado = rateLimiter.saturado();
         if (!rateLimiter.permitir("ip:" + ip, c.limiteIp())) {
             throw limite();
         }
-        if (!rateLimiter.permitir("ap:" + aparelho, c.limiteAparelho())) {
+        if (!saturado && !rateLimiter.permitir("ap:" + aparelho, c.limiteAparelho())) {
             throw limite();
         }
         if (!rateLimiter.permitir("site:" + c.siteId(), c.limiteSite())) {

@@ -7,7 +7,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Limite do QR: {@code null} = sem limite, bloqueio ao estourar, chave vencida zera a janela e o mapa
- * de chaves não cresce indefinidamente.
+ * de chaves não cresce indefinidamente. Com o mapa saturado, o aviso é dado e o chamador passa a
+ * aplicar só IP e site/hora.
  */
 class RateLimiterTest {
 
@@ -40,22 +41,32 @@ class RateLimiterTest {
         assertThat(rl.permitir("ip:1.2.3.4", 1)).isTrue();
     }
 
+    /** Abaixo do teto nada acontece. */
+    @Test
+    void mapaAbaixoDoTetoNaoFicaSaturado() {
+        RateLimiter rl = new RateLimiter(Duration.ofHours(1), 10);
+        for (int i = 0; i < 10; i++) {
+            rl.permitir("ip:" + i, 5);
+        }
+        assertThat(rl.saturado()).isFalse();
+        assertThat(rl.tamanho()).isEqualTo(10);
+    }
+
     /**
-     * O mapa não cresce indefinidamente: ao passar do teto, a chamada seguinte descarta as chaves de
-     * janelas anteriores. O teto é gatilho da varredura, não limite rígido — dentro de uma mesma janela
-     * o número de chaves é o de visitantes distintos naquela hora, que é o próprio objetivo.
+     * A varredura só pode descartar chaves de janelas anteriores; dentro da janela corrente o número de
+     * chaves é o de visitantes distintos naquela hora, que é o próprio objetivo. Passada a janela, a
+     * varredura limpa e a saturação desaparece.
      */
     @Test
-    void mapaDeChavesNaoCresceSemTeto() throws Exception {
+    void saturacaoDesapareceDepoisDaVarreduraDasChavesVencidas() throws Exception {
         RateLimiter rl = new RateLimiter(Duration.ofMillis(40), 10);
         for (int i = 0; i < 11; i++) {
             rl.permitir("ip:" + i, 5);
         }
-        assertThat(rl.tamanho()).isGreaterThan(10);
+        assertThat(rl.saturado()).isTrue();
 
-        // janela seguinte: uma nova chamada dispara a varredura e as chaves vencidas somem
-        Thread.sleep(60);
-        rl.permitir("ip:nova", 5);
+        Thread.sleep(60); // janela nova
+        assertThat(rl.saturado()).isFalse();
         assertThat(rl.tamanho()).isLessThan(11);
     }
 }

@@ -167,6 +167,31 @@ class PreCadastroIntegrationTest extends OnlineTesteBase {
         assertThat(preCadastrar(IDENTIFICADOR_QR, null, "1.2.3.4", null).getResponse().getStatus()).isEqualTo(429);
     }
 
+    /**
+     * Com o mapa de limites saturado, o limite por aparelho é ignorado (não se cria chave nova de
+     * aparelho), mas o envio continua: os limites que valem são o por IP e o por site/hora.
+     */
+    @Test
+    void saturacaoDesligaOLimitePorAparelhoSemBloquearOEnvio() throws Exception {
+        configurarSite(SITE, IDENTIFICADOR_QR, true, true, null);
+        limitePorAparelho(1);
+        for (int i = 0; i < 50_100; i++) {
+            rateLimiter.permitir("enchimento:" + i, 5);
+        }
+
+        // mesmo aparelho, vários envios: com a saturação o limite por aparelho não entra
+        for (int i = 0; i < 3; i++) {
+            assertThat(preCadastrar(IDENTIFICADOR_QR, null, null, "navegador-abc").getResponse().getStatus())
+                    .isEqualTo(200);
+        }
+        // ... e o limite por IP continua valendo
+        jdbc.update("UPDATE config_site SET limite_por_ip_hora = 1 WHERE site_id = ?", SITE);
+        assertThat(preCadastrar(IDENTIFICADOR_QR, null, null, "navegador-abc").getResponse().getStatus())
+                .isEqualTo(200);
+        assertThat(preCadastrar(IDENTIFICADOR_QR, null, null, "navegador-abc").getResponse().getStatus())
+                .isEqualTo(429);
+    }
+
     // ------------------------------------------------------------------ indisponibilidade
 
     @Test
