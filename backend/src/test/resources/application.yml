@@ -24,3 +24,4 @@ online:
   base-url: ${ONLINE_BASE_URL:http://localhost:8090}
   # 0 nos testes: o tempo mínimo de preenchimento é testado de forma determinística no FormTokenStoreTest.
   tempo-minimo-preenchimento: ${ONLINE_TEMPO_MINIMO:0s}
+  cors-origens: http://localhost:4300

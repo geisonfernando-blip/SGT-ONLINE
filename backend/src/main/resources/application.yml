@@ -24,3 +24,6 @@ online:
   base-url: ${ONLINE_BASE_URL:http://localhost:8090}
   # Tempo mínimo entre carregar o formulário e enviar (anti-bot, DEC §4/§11).
   tempo-minimo-preenchimento: ${ONLINE_TEMPO_MINIMO:3s}
+  # Origens liberadas para a página pública (lista separada por vírgula, SEM curinga). No ensaio na
+  # rede local, entrar a origem do frontend, ex.: http://192.168.0.10:4300
+  cors-origens: ${ONLINE_CORS_ORIGENS:http://localhost:4300}

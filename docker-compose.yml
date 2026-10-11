@@ -30,6 +30,8 @@ services:
       # de dentro do compose do SGT.
       ONLINE_BASE_URL: ${ONLINE_BASE_URL:-http://host.docker.internal:8090}
       ONLINE_TEMPO_MINIMO: ${ONLINE_TEMPO_MINIMO:-3s}
+      # Origens liberadas no CORS da página pública (lista separada por vírgula, SEM curinga).
+      ONLINE_CORS_ORIGENS: ${ONLINE_CORS_ORIGENS:-http://localhost:4300}
     depends_on:
       db:
         condition: service_healthy
