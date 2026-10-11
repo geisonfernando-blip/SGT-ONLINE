@@ -11,6 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
@@ -21,6 +23,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class ConectorJwtFilter extends OncePerRequestFilter {
 
     public static final String ATTR_INSTALACAO = "online.instalacao";
+
+    private static final Logger LOG = LoggerFactory.getLogger(ConectorJwtFilter.class);
 
     private final OnlineRepository repo;
     private final ConectorProperties props;
@@ -51,7 +55,9 @@ public class ConectorJwtFilter extends OncePerRequestFilter {
                 return;
             }
         } catch (Exception e) {
-            // nunca logar o token nem o motivo detalhado; só o código do contrato
+            // nunca logar o token, o jti nem o motivo detalhado; só o código do contrato
+            LOG.warn("evento=erro_contrato codigo=TOKEN_INVALIDO status=401 metodo={} rota={}",
+                    req.getMethod(), req.getRequestURI());
             erro(res, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALIDO");
             return;
         }
