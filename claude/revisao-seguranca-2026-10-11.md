@@ -48,10 +48,13 @@ fica para quando a suíte do SGT liberar.
 ## Pendências abertas (NÃO implementadas)
 
 - **PEND-ONLINE-01 — `X-Forwarded-For` sem proxy confiável.** Hoje a requisição chega **direto** ao
-  backend (o `environment.ts` aponta para `http://localhost:8090`, sem `proxyConfig`), logo
-  `remoteAddr` já é o endereço real. Aceitar XFF de qualquer origem deixa a chave do limite por IP
-  forjável por `curl`. Regra a implementar: aceitar XFF **só** se `remoteAddr` estiver em
-  `ONLINE_PROXIES_CONFIAVEIS` (lista); senão usar `remoteAddr`.
+  backend (o `environment.ts` aponta para `http://localhost:8090`, sem `proxyConfig`). Medido em
+  2026-10-11: o Docker Desktop faz NAT das portas publicadas, então o container **não vê o IP real** —
+  toda conexão externa aparece como `172.17.0.1` (ver `ensaio-rede-local.md`, seção 1). Por isso
+  `ipDo()` passou a usar **só** o `remoteAddr` (XFF é ignorado). A pendência fica ligada à proposta de
+  mesmo domínio com proxy reverso: quando existir proxy, aceitar XFF **só** se `remoteAddr` estiver
+  em `ONLINE_PROXIES_CONFIAVEIS`. Nota: XFF **não** resolve o problema sozinho — o NAT do Docker
+  descarta o IP antes de o backend ver a requisição.
 - **PEND-ONLINE-02 — retenção de IP para segurança é decisão LGPD em aberto.** O MVP guarda o IP no
   pré-cadastro só até o ack/expiração e **não registra IP em log**. Definir prazo e base legal é do
   responsável; não decidir aqui.
@@ -61,4 +64,15 @@ fica para quando a suíte do SGT liberar.
 - **PEND-ONLINE-04 — cabeçalhos da página** (CSP, `frame-ancestors`, `Permissions-Policy`) dependem de
   servir o build de produção; proposta em `proposta-headers-pagina.md`.
 - **PEND-ONLINE-05 — `RateLimiter` em memória**, janela fixa de 1 h: reinicia com o backend e é por
-  instância. Suficiente no MVP (instância única). Janela deslizante/persistida só se fizer falta.
+  instância. Suficiente no MVP (instância única). Em 2026-10-11 ganhou descarte das chaves de janelas
+  vencidas ao passar do teto de 50 000 chaves; janela deslizante/persistida só se fizer falta.
+
+## Complemento de 2026-10-11 (após a revisão aprovada)
+
+- `ipDo()` passou a usar **só** o `remoteAddr`; `X-Forwarded-For` é ignorado.
+- Lista de origens do CORS vazia só é aceita no perfil `dev`; fora dele o **boot falha**
+  (`CorsConfig`), e o compose passou a exigir `ONLINE_CORS_ORIGENS`.
+- Erros do próprio Spring (404 de rota, 405 de método, 415 de tipo, 400 de JSON malformado) mantêm o
+  status e saem no corpo do contrato; o 401 do filtro JWT passou a incluir `correlacao`.
+- `RateLimiter` descarta chaves de janelas vencidas ao passar do teto.
+- Testes: 64 verdes.
