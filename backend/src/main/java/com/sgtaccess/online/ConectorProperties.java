@@ -11,8 +11,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *                                 conector. Tem de ser IGUAL a {@code SGT_ONLINE_URL} do conector (a
  *                                 URL que ele de fato acessa).
  * @param tempoMinimoPreenchimento tempo mínimo entre carregar o formulário e enviar (anti-bot).
- * @param corsOrigens              origens liberadas para a página pública, sem curinga. Vazio = CORS
- *                                 desligado (o frontend passa a ser servido na mesma origem).
+ * @param corsOrigens              origens liberadas para a página pública, sem curinga. Lista vazia
+ *                                 só é aceita no perfil {@code dev}; fora dele o boot falha (ver
+ *                                 {@link CorsConfig}).
  */
 @ConfigurationProperties(prefix = "online")
 public record ConectorProperties(String baseUrl, Duration tempoMinimoPreenchimento, List<String> corsOrigens) {
@@ -21,10 +22,8 @@ public record ConectorProperties(String baseUrl, Duration tempoMinimoPreenchimen
         return tempoMinimoPreenchimento == null ? Duration.ofSeconds(3) : tempoMinimoPreenchimento;
     }
 
-    /** Origens liberadas; nunca devolve lista vazia, porque aí não haveria CORS nenhum. */
+    /** Origens liberadas. Lista vazia é configuração incompleta: só o perfil `dev` a tolera. */
     public List<String> corsOrigens() {
-        return corsOrigens == null || corsOrigens.isEmpty()
-                ? List.of("http://localhost:4300")
-                : corsOrigens;
+        return corsOrigens == null ? List.of() : corsOrigens;
     }
 }

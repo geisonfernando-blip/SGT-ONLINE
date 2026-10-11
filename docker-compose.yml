@@ -31,7 +31,8 @@ services:
       ONLINE_BASE_URL: ${ONLINE_BASE_URL:-http://host.docker.internal:8090}
       ONLINE_TEMPO_MINIMO: ${ONLINE_TEMPO_MINIMO:-3s}
       # Origens liberadas no CORS da página pública (lista separada por vírgula, SEM curinga).
-      ONLINE_CORS_ORIGENS: ${ONLINE_CORS_ORIGENS:-http://localhost:4300}
+      # Obrigatória: sem ela o backend não sobe (fora do perfil dev).
+      ONLINE_CORS_ORIGINS: ${ONLINE_CORS_ORIGINS:?informe a origem da pagina publica, ex.: http://192.168.0.10:4300}
     depends_on:
       db:
         condition: service_healthy
