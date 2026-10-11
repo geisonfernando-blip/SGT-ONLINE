@@ -47,6 +47,9 @@ fica para quando a suíte do SGT liberar.
 
 ## Pendências abertas (NÃO implementadas)
 
+> Lista completa e vigente em **`pendencias-online.md`** (inclusive a PEND bloqueante de go-live).
+> Resumo do que foi aberto nesta revisão:
+
 - **PEND-ONLINE-01 — `X-Forwarded-For` sem proxy confiável.** Hoje a requisição chega **direto** ao
   backend (o `environment.ts` aponta para `http://localhost:8090`, sem `proxyConfig`). Medido em
   2026-10-11: o Docker Desktop faz NAT das portas publicadas, então o container **não vê o IP real** —

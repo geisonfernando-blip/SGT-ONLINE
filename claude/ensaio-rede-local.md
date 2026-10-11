@@ -42,6 +42,10 @@ Ordem de custo, do mais barato ao mais caro:
 
 Nenhuma dessas foi feita — é decisão de topologia do responsável.
 
+> **Antes do go-live**, o mesmo teste tem de ser repetido no servidor real (Docker Engine em Linux), com
+> dois dispositivos na rede local. Enquanto isso não for confirmado, o IP gravado no aceite LGPD
+> **não vale como prova**. Rastreio: `PEND-ONLINE-06` em `pendencias-online.md` (bloqueio).
+
 ## 2. Frontend acessível pelo celular
 
 `environment.ts` continua com `http://localhost:8090/api/publico`, que só resolve na própria máquina.
