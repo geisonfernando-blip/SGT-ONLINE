@@ -192,20 +192,18 @@ public class PreCadastroService {
         return v != null && APARELHO.matcher(v.trim()).matches() ? v.trim() : ip;
     }
 
-    /**
- * IP do visitante. Hoje o frontend chama o backend DIRETO (sem proxy), então {@code remoteAddr} já é o
- * endereço real. O {@code X-Forwarded-For} só deve ser considerado quando houver proxy reverso
- * confiável na frente — enquanto não houver, aceitá-lo de qualquer origem deixa a chave do limite por
- * IP forjável por qualquer cliente. PEND: aceitar XFF só se {@code remoteAddr} estiver em
- * {@code ONLINE_PROXIES_CONFIAVEIS}.
+/**
+ * IP do visitante: o {@code remoteAddr} da conexão, e nada mais.
+ *
+ * <p>O {@code X-Forwarded-For} é deliberadamente IGNORADO: hoje não há proxy reverso (o frontend chama
+ * o backend direto, em outra porta) e, sem proxy confiável na frente, aceitar esse cabeçalho deixaria a
+ * chave do limite por IP forjável por qualquer cliente. Quando existir proxy (mesmo domínio com
+ * {@code proxy_pass}, PEND-ONLINE-01), aí sim passa a valer, aceitando XFF somente se o
+ * {@code remoteAddr} estiver na lista de proxies confiáveis.
  */
 private static String ipDo(HttpServletRequest req) {
-        String ff = req.getHeader("X-Forwarded-For");
-        if (ff != null && !ff.isBlank()) {
-            return ff.split(",")[0].trim();
-        }
-        return req.getRemoteAddr();
-    }
+    return req.getRemoteAddr();
+}
 
     private static ErroApi limite() {
         return new ErroApi(HttpStatus.TOO_MANY_REQUESTS, "LIMITE_EXCEDIDO", "muitas tentativas; tente mais tarde");

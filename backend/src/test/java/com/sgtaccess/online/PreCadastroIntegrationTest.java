@@ -252,7 +252,11 @@ class PreCadastroIntegrationTest extends OnlineTesteBase {
         var b = post("/api/publico/pre-cadastro").contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(corpo));
         if (ip != null) {
-            b.header("X-Forwarded-For", ip);
+            // o IP vem do remoteAddr da conexão; X-Forwarded-For é ignorado pelo serviço
+            b.with(r -> {
+                r.setRemoteAddr(ip);
+                return r;
+            });
         }
         if (aparelho != null) {
             b.header("X-Aparelho", aparelho);
