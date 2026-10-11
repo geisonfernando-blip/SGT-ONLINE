@@ -11,6 +11,26 @@ visita pontual. Sem dados pessoais nos exemplos (só `status`, `codigo_curto`, `
 
 ---
 
+## Plano de rodadas (ordem obrigatória)
+
+O ensaio é feito em **duas rodadas completas**, porque exercitam caminhos diferentes. A segunda só
+começa depois que a primeira passa inteira.
+
+| # | Rodada | Caminho | O que valida de mais |
+|---|---|---|---|
+| **R1** | E2E no PC | `localhost:4300` (frontend padrão) | o fluxo inteiro, **sem** depender de firewall, CORS de LAN nem placa |
+| **R2** | E2E pela placa | celular → `http://192.168.1.200:4300` (`npm run start:ensaio`) | o mesmo fluxo **pela rede**, como o público vai usar: firewall, CORS, placa e `apiBase` |
+
+- **Pré-condição da R2:** firewall aplicado pelo responsável (entrada TCP 4300 e 8090, perfil Private,
+  remoto `192.168.1.0/24`). Ver `claude/ensaio-rede-local.md`, seção 3.
+- **R2 tem de passar inteira**, ponta a ponta: celular → formulário → `PRE_CADASTRO_QR` → conector →
+  SGT → portaria → visita → baixa.
+- **No dia da demonstração**, isso vira só uma **confirmação rápida** com um celular (o R1 já having
+  provado o fluxo): abrir a placa, enviar, conferir na portaria.
+- Roteiro completo de cada rodada, abaixo.
+
+---
+
 ## Pré-condições
 
 | # | Item | Comando de conferência | Evidência |
@@ -64,8 +84,12 @@ online docker compose exec -T backend curl -fsS "http://localhost:8090/api/publi
 
 ## Passo 3 — Visitante preenche e gera o código
 
-Abrir `http://localhost:4300/q/ensaioQR0001` no navegador, preencher (nome + CPF **ou** documento),
+**R1 (no PC):** abrir `http://localhost:4300/q/ensaioQR0001`, preencher (nome + CPF **ou** documento),
 marcar o aceite e enviar.
+
+**R2 (pela placa, com o celular):** apontar a câmera para a placa e abrir
+`http://192.168.1.200:4300/q/ensaioQR0001`, mesmo preenchimento. Confirmar que o formulário abriu
+pelo `start:ensaio` — se abrir pelo `environment.ts` padrão, o celular recebeu erro de CORS.
 
 → **evidência:** código de 6 dígitos exibido.
 
