@@ -1,7 +1,6 @@
 package com.sgtaccess.online;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -236,11 +235,12 @@ class ConectorIntegrationTest extends OnlineTesteBase {
     }
 
     @Test
-    void excecaoDepoisDaAutenticacaoNaoEhEngolidaComo401() {
+    void excecaoDepoisDaAutenticacaoNaoEhEngolidaComo401() throws Exception {
         // O endpoint de teste lança RuntimeException DEPOIS do filtro de JWT. O filtro só protege a
-        // verificação do token; a exceção tem de propagar (vira 5xx no container), nunca virar 401.
-        assertThatThrownBy(() -> mvc.perform(get("/api/conector/v1/teste/excecao").headers(auth())))
-                .rootCause().isInstanceOf(RuntimeException.class);
+        // verificação do token; a exceção tem de virar 5xx (tratada pelo ApiErros), nunca 401.
+        mvc.perform(get("/api/conector/v1/teste/excecao").headers(auth()))
+                .andExpect(status().is5xxServerError())
+                .andExpect(jsonPath("$.codigo").value("ERRO_INTERNO"));
     }
 
     // ------------------------------------------------------------------ helpers
