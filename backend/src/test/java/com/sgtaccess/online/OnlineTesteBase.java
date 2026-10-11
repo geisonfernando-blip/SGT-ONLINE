@@ -18,10 +18,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
@@ -153,6 +157,59 @@ abstract class OnlineTesteBase {
         } catch (java.security.NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    // ------------------------------------------------------------------ fixtures do contrato
+
+/** Mensagem CONFIG_SITE do contrato §5 para o site de ensaio. */
+    ObjectNode configSite(UUID id, long versao, ObjectNode dados) {
+        ObjectNode m = om.createObjectNode();
+        m.put("id", id.toString());
+        m.put("tipo", "CONFIG_SITE");
+        m.put("versaoContrato", 1);
+        m.put("tenant", String.valueOf(TENANT));
+        m.put("site", String.valueOf(SITE));
+        m.put("criadoEm", java.time.OffsetDateTime.now().toString());
+        m.put("chave", "site:" + SITE);
+        m.put("versao", versao);
+        m.set("dados", dados);
+        return m;
+    }
+
+    /** `dados` de uma CONFIG_SITE válida, com ou sem termo. */
+    ObjectNode dadosConfig(boolean comTermo) {
+        ObjectNode d = om.createObjectNode();
+        d.put("identificadorQr", IDENTIFICADOR_QR);
+        d.put("ativo", true);
+        d.put("preCadastroExpiraHoras", 4);
+        d.put("codigoCurtoDigitos", 6);
+        ObjectNode limites = d.putObject("limites");
+        limites.putNull("porIpHora");
+        limites.putNull("porAparelhoHora");
+        limites.putNull("porSiteHora");
+        if (comTermo) {
+            ObjectNode t = d.putObject("termo");
+            t.put("termoId", TERMO_ID);
+            t.put("termoVersao", 1);
+            t.put("sha256Texto", sha256(TEXTO_TERMO));
+            t.put("texto", TEXTO_TERMO);
+        } else {
+            d.putNull("termo");
+        }
+        return d;
+    }
+
+    /** POST /saida autenticado com o lote de mensagens. */
+    ResultActions enviarSaida(ObjectNode... mensagens) throws Exception {
+        ArrayNode arr = om.createArrayNode();
+        for (ObjectNode m : mensagens) {
+            arr.add(m);
+        }
+        ObjectNode corpo = om.createObjectNode();
+        corpo.set("mensagens", arr);
+        return mvc.perform(MockMvcRequestBuilders.post("/api/conector/v1/saida").headers(auth())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(corpo)));
     }
 
     /** Garante a purga completa (LGPD): todos os dados pessoais NULL, identificadores preservados. */

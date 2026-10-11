@@ -69,6 +69,7 @@ public class ConectorJwtFilter extends OncePerRequestFilter {
         res.setStatus(status);
         res.setContentType("application/json");
         res.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        res.getWriter().write("{\"codigo\":\"" + codigo + "\",\"mensagem\":\"autenticação recusada\"}");
+        res.getWriter().write(
+                "{\"codigo\":\"" + codigo + "\",\"mensagem\":\"autenticação recusada\",\"correlacao\":null}");
     }
 }
