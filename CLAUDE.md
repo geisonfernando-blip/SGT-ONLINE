@@ -19,6 +19,9 @@
 
 ## Regras de trabalho
 - Build/testes sempre com `./mvnw clean verify` (nunca sem `clean`). Frontend: `npx ng test` e `npm run build`.
+- **Antes de qualquer liberação (commit, entrega, ensaio, demo), rodar `docker compose config -q`** e
+  exigir saída limpa. O compose já passou por toda a suíte de testes quebrado uma vez: erro de YAML só
+  aparece na hora de subir, não no build nem no teste.
 - Nunca reescrever migration commitada; correção vai em migration nova.
 - SQL sempre parametrizado; erros de FK/unique viram 409/400 com mensagem legível.
 - Sem `innerHTML`/`bypassSecurityTrust*` no front; só interpolação Angular.

@@ -75,26 +75,37 @@ O sistema precisa liberar **entrada TCP** nestas portas na máquina do ensaio, n
 Cuidados:
 
 - liberar apenas em **perfil Private** da rede, nunca em Public;
-- **não** abrir essas duas portas para a internet nem para redes desconhecidas;
+- restringir o remoto à rede do ensaio (`192.168.1.0/24`): **não** abrir essas portas para a internet
+  nem para redes desconhecidas;
 - a porta **5433** (PostgreSQL) **não** deve ser liberada: só o container `db` precisa falar com ela;
 - depois da demonstração, **remover** as regras.
 
-Comandos de referência (PowerShell, **executar só com autorização**):
+Comandos de referência. **Não executados** — quem aplica é o responsável, no dia:
 
 ```powershell
-# exemplo — perfil Private, protocolo TCP, apenas essas portas
+# exemplo — entrada TCP 4300 (frontend) e 8090 (backend), perfil Private, só da rede 192.168.1.0/24
 New-NetFirewallRule -DisplayName "Online 4300 (ensaio)" -Direction Inbound -Action Allow `
-  -Protocol TCP -LocalPort 4300 -Profile Private
+  -Protocol TCP -LocalPort 4300 -Profile Private -RemoteAddress 192.168.1.0/24
 New-NetFirewallRule -DisplayName "Online 8090 (ensaio)" -Direction Inbound -Action Allow `
-  -Protocol TCP -LocalPort 8090 -Profile Private
+  -Protocol TCP -LocalPort 8090 -Profile Private -RemoteAddress 192.168.1.0/24
 ```
 
 Para conferir o que já está liberado (somente leitura):
 
 ```powershell
 Get-NetFirewallRule -Direction Inbound -Enabled True |
-  Where-Object { $_.DisplayName -like "Online*" }
+  Where-Object { $_.DisplayName -like "Online*" } |
+  Get-NetFirewallPortFilter | Format-Table Protocol, LocalPort
 ```
+
+Para remover no fim da demonstração:
+
+```powershell
+Remove-NetFirewallRule -DisplayName "Online 4300 (ensaio)", "Online 8090 (ensaio)"
+```
+
+> O ensaio que roda **no próprio PC**, em `localhost:4300`, não depende destas regras: elas só são
+> necessárias quando o acesso vem de outro dispositivo.
 
 ## 4. Limites compatíveis com ensaio e demonstração
 
