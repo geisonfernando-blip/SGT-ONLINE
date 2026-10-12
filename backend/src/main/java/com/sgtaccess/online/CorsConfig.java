@@ -1,6 +1,8 @@
 package com.sgtaccess.online;
 
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -21,6 +23,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CorsConfig.class);
+
     private final ConectorProperties props;
     private final boolean dev;
 
@@ -28,6 +32,8 @@ public class CorsConfig implements WebMvcConfigurer {
         this.props = props;
         this.dev = env.acceptsProfiles(Profiles.of("dev"));
         List<String> origens = props.corsOrigens();
+        // só a QUANTIDADE: o valor é uma origem da rede local e não entra em log
+        LOG.info("evento=cors_origens total={} perfil_dev={}", origens.size(), this.dev);
         if (origens.isEmpty() && !this.dev) {
             throw new IllegalStateException(
                     "ONLINE_CORS_ORIGENS vazio: informe as origens da página pública, ex.: "

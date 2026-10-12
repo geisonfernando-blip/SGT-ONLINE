@@ -88,8 +88,14 @@ online docker compose exec -T backend curl -fsS "http://localhost:8090/api/publi
 marcar o aceite e enviar.
 
 **R2 (pela placa, com o celular):** apontar a câmera para a placa e abrir
-`http://192.168.1.200:4300/q/ensaioQR0001`, mesmo preenchimento. Confirmar que o formulário abriu
-pelo `start:ensaio` — se abrir pelo `environment.ts` padrão, o celular recebeu erro de CORS.
+`http://192.168.1.200:4300/q/ensaioQR0001`, mesmo preenchimento.
+
+**Como reconhecer os dois sintomas de configuração errada (são diferentes):**
+
+| Sintoma | Causa | Como reconhecer no celular |
+|---|---|---|
+| **Erro de conexão/rede** (`ERR_CONNECTION_REFUSED`, `net::ERR_...`, "site não pode ser acessado") | o frontend subiu sem `start:ensaio`: o `apiBase` ficou `http://localhost:8090/api/publico`, que no celular aponta para o **próprio celular**, onde não há nada escutando | console do navegador (Chrome Android: `chrome://inspect`) ou DevTools do PC com o celular conectado; o erro é de **conexão**, antes de qualquer CORS |
+| **Erro de CORS** (`Access to fetch at 'http://192.168.1.200:8090/...' from origin 'http://192.168.1.200:4300' has been blocked by CORS policy`) | o backend subiu com outra `ONLINE_CORS_ORIGENS`, sem a origem da rede local | a URL da chamada aparece como `192.168.1.200:8090` (**a API foi alcançada** e foi o navegador que bloqueou a resposta); aparece no console junto com o preflight `OPTIONS`
 
 → **evidência:** código de 6 dígitos exibido.
 

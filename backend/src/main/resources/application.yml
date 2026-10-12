@@ -26,7 +26,9 @@ online:
   tempo-minimo-preenchimento: ${ONLINE_TEMPO_MINIMO:3s}
   # Origens liberadas para a página pública (lista separada por vírgula, SEM curinga). VAZIO só é
   # aceito no perfil dev (abaixo); fora dele o boot falha — não silenciar configuração incompleta.
-  cors-origens: ${ONLINE_CORS_ORIGENS:}
+  # O placeholder é obrigatório: o bind por nome de propriedade (online.cors-origens <- ONLINE_CORS_ORIGINS)
+  # NÃO funciona, porque a propriedade tem hífen e a variável de ambiente, não.
+  cors-origens: ${ONLINE_CORS_ORIGENS:http://marcador.invalido}
 
 # Somente em desenvolvimento local. Fora daqui, ONLINE_CORS_ORIGENS tem de vir do ambiente.
 ---
